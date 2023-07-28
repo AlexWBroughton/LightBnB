@@ -13,7 +13,7 @@ router.post("/", (req, res) => {
     .then((user) => {
       if (!user) {
         return res.send({ error: "error" });
-      }
+      } 
 
       req.session.userId = user.id;
       res.send("🤗");
@@ -25,6 +25,7 @@ router.post("/", (req, res) => {
 router.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+
 
   database.getUserWithEmail(email).then((user) => {
     if (!user) {

@@ -7,7 +7,7 @@ const pool = new Pool({
   user: 'vagrant',
   password: '123',
   host: 'localhost',
-  database: 'vagrant'
+  database: 'lightbnb'
 });
 
 /// Users
@@ -20,10 +20,30 @@ const pool = new Pool({
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function (guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  const values = [guest_id,limit];
+  return pool
+    .query(`SELECT reservations.*, properties.*, avg(rating) as average_rating
+    FROM reservations
+    JOIN properties ON reservations.property_id = properties.id
+    JOIN property_reviews ON properties.id = property_reviews.property_id
+    WHERE reservations.guest_id = $1
+    GROUP BY properties.id, reservations.id
+    ORDER BY reservations.start_date
+    LIMIT $2;`, values)
+    .then((result) => { 
+      console.log('hello ' + result);
+      return result.rows;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
 };
 
 /// Properties
+
+/*
+
+*/
 
 /**
  * Get all properties.
@@ -32,7 +52,7 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = (options, limit = 10) => {
-  pool
+  return pool
     .query(`SELECT * FROM properties LIMIT $1`, [limit])
     .then((result) => {
       console.log(result.rows);
@@ -43,22 +63,16 @@ const getAllProperties = (options, limit = 10) => {
     });
 };
 
+
 /**
  * Get a single user from the database given their email.
  * @param {String} email The email of the user.
  * @return {Promise<{}>} A promise to the user.
  */
-
 const getUserWithEmail = (email) => {
-  pool
-  .query('SELECT * FROM users WHERE users.email = $1 LIMIT 1;',[email])
-  .then((result) => {
-    console.log(result.rows);
-    return result.rows;
-  })
-  .catch((err) => {
-    console.log(err.message);
-  });
+  return pool
+  .query('SELECT * FROM users WHERE email = $1;',[email])
+  .then(result=> result.rows[0])
 };
 
 /**
@@ -67,11 +81,11 @@ const getUserWithEmail = (email) => {
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithId = (id) =>{
-  pool
-  .query('SELECT * FROM users WHERE users.id = $1 LIMIT 1;',[id])
+  return pool
+  .query('SELECT * FROM users WHERE id = $1;',[id])
   .then((result) => {
-    console.log(result.rows);
-    return result.rows;
+    console.log('hello ' + result.rows[0].email);
+    return result.rows[0];
   })
   .catch((err) => {
     console.log(err.message);
@@ -85,7 +99,7 @@ const getUserWithId = (id) =>{
  */
 const addUser = (user) => {
 
-  pool
+  return pool
   .query('INSERT INTO users(name,email,password) VALUES ($1,$2,$3) RETURNING *;',[user.name,user.email,user.password])
   .then((result) => {
     console.log(result.rows);
@@ -98,7 +112,7 @@ const addUser = (user) => {
 };
 
 //getUserWithEmail("asherpoole@gmx.com");
-getUserWithId(3);
+getUserWithId(4);
 
 
 /**
